@@ -146,3 +146,21 @@ function add_sticky_activities_to_rest_response($response, $handler, $request) {
 }
 
 add_filter('rest_request_after_callbacks', 'add_sticky_activities_to_rest_response', 10, 3);
+
+// BuddyPress get activity için yorum ve beğeni sayısını ekler
+function custom_add_fields_to_activity_json( $response, $request, $activity ) {
+	global $wpdb;
+	
+    // Yorum sayısını ekleyin
+    $response->data['comment_count'] = $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(id) FROM {$wpdb->prefix}bp_activity WHERE item_id = %d AND type = 'activity_comment'",
+        $activity->id
+    ));
+
+    // Beğeni sayısını ekleyin
+    $response->data['favorite_count'] = bp_activity_get_meta($activity->id, 'favorite_count');
+
+    return $response;
+}
+
+add_filter( 'bp_rest_activity_prepare_value', 'custom_add_fields_to_activity_json', 10, 3 );
