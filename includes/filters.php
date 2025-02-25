@@ -79,3 +79,70 @@ add_filter('bp_pre_user_query', function ($query) {
         }
     }
 });
+
+/**
+ * BuddyPress REST API yanıtına sabitlenmiş aktivitelerin bilgilerini ekler
+ */
+function add_sticky_activities_to_rest_response($response, $handler, $request) {
+    if ($request->get_method() !== 'GET') {
+        return $response;
+    }
+
+    if (strpos($request->get_route(), '/buddypress/v1/activity') === false) {
+        return $response;
+    }
+
+    $page = (int) $request->get_param('page');
+    $user = $request->get_param('user_id');
+
+    if (!empty($user) || ($page > 1)) {
+        return $response;
+    }
+
+    $sticky_posts = get_option('youzify_activity_sticky_posts', []);
+    if (empty($sticky_posts) || !is_array($sticky_posts)) {
+        return $response;
+    }
+
+    $response_data = $response->get_data();
+
+    foreach ($sticky_posts as $activity_id) {
+        $activity = bp_activity_get_specific(['activity_ids' => [$activity_id]]);
+        if (empty($activity['activities'][0])) {
+            continue;
+        }
+
+        $activity_data = $activity['activities'][0];
+        $user_id = (int) $activity_data->user_id;
+        $user_api_link = rest_url('buddypress/v1/members/' . $user_id);
+        $avatar_full = bp_core_fetch_avatar([
+            'item_id' => $user_id,
+            'type' => 'full',
+            'html' => false
+        ]);
+
+        $sticky_activity = [
+            'id' => (int) $activity_data->id,
+            'primary_item_id' => (int) $activity_data->item_id,
+            'secondary_item_id' => (int) $activity_data->secondary_item_id,
+            'user_id' => $user_id,
+            'component' => $activity_data->component,
+            'type' => $activity_data->type,
+            'content' => [
+                'rendered' => apply_filters('bp_get_activity_content', $activity_data->content)
+            ],
+            'date' => bp_rest_prepare_date_response($activity_data->date_recorded),
+            'favorited' => in_array($activity_id, bp_activity_get_user_favorites(get_current_user_id())),
+            'pinned' => true,
+            'user_avatar' => ['full' => $avatar_full],
+            '_links' => ['user' => [['href' => $user_api_link]]]
+        ];
+
+        array_unshift($response_data, $sticky_activity);
+    }
+
+    $response->set_data($response_data);
+    return $response;
+}
+
+add_filter('rest_request_after_callbacks', 'add_sticky_activities_to_rest_response', 10, 3);
