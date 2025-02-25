@@ -88,7 +88,7 @@ function add_sticky_activities_to_rest_response($response, $handler, $request) {
         return $response;
     }
 
-    if (strpos($request->get_route(), '/buddypress/v1/activity') === false) {
+    if ($request->get_route() !== '/buddypress/v1/activity') {
         return $response;
     }
 
