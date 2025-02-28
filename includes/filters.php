@@ -93,9 +93,9 @@ function add_sticky_activities_to_rest_response($response, $handler, $request) {
     }
 
     $page = (int) $request->get_param('page');
-    $user = $request->get_param('user_id');
+    $pinned = $request->get_param('pinned');
 
-    if (!empty($user) || ($page > 1)) {
+    if (($page > 1) || empty($pinned) && !$pinned) {
         return $response;
     }
 
