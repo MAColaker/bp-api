@@ -93,11 +93,11 @@ function add_sticky_activities_to_rest_response($response, $handler, $request) {
     }
 
     $page = (int) $request->get_param('page');
-    $pinned = $request->get_param('pinned');
+    $pinned = filter_var($request->get_param('pinned'), FILTER_VALIDATE_BOOLEAN);
 
-    if (($page > 1) || empty($pinned) && !$pinned) {
-        return $response;
-    }
+	if ($page > 1 || !$pinned) {
+		return $response;
+	}
 
     $sticky_posts = get_option('youzify_activity_sticky_posts', []);
     if (empty($sticky_posts) || !is_array($sticky_posts)) {
