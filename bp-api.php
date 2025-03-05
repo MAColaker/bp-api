@@ -14,6 +14,7 @@ require_once plugin_dir_path(__FILE__) . 'includes/api-activity.php';
 require_once plugin_dir_path(__FILE__) . 'includes/api-member.php';
 require_once plugin_dir_path(__FILE__) . 'includes/api-report.php';
 require_once plugin_dir_path(__FILE__) . 'includes/api-user.php';
+require_once plugin_dir_path(__FILE__) . 'includes/api-file.php';
 
 require_once plugin_dir_path(__FILE__) . 'includes/db-functions.php';
 require_once plugin_dir_path(__FILE__) . 'includes/filters.php';
