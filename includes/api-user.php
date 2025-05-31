@@ -5,14 +5,18 @@ add_action('rest_api_init', function () {
     register_rest_route('bp-api/v1', '/user/block', [
         'methods'  => 'POST',
         'callback' => 'block_user_handler',
-        'permission_callback' => 'is_user_logged_in',
+        'permission_callback' => function () {
+            return is_user_logged_in();
+        }
     ]);
 
     // Kullanıcı engellemeyi kaldırma
     register_rest_route('bp-api/v1', '/user/unblock', [
         'methods'  => 'POST',
         'callback' => 'unblock_user_handler',
-        'permission_callback' => 'is_user_logged_in',
+        'permission_callback' => function () {
+            return is_user_logged_in();
+        }
     ]);
 });
 
