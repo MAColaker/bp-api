@@ -5,7 +5,9 @@ add_action('rest_api_init', function () {
     register_rest_route('bp-api/v1', '/report', array(
         'methods' => 'POST',
         'callback' => 'handle_report',
-        'permission_callback' => '__return_true', // Kullanıcı doğrulaması eklenebilir
+        'permission_callback' => function () {
+            return is_user_logged_in();
+        }
     ));
 });
 

@@ -4,26 +4,27 @@ add_action('rest_api_init', function () {
     register_rest_route('bp-api/v1', '/member/(?P<user_id>\d+)/activities-count', array(
         'methods' => 'GET',
         'callback' => 'get_user_activity_count_for_types',
-        'permission_callback' => 'is_user_logged_in', // İzin kontrolü gerekirse buraya ekleyebilirsiniz
+        'permission_callback' => function () {
+            return is_user_logged_in();
+        }
     ));
-});
 
-add_action('rest_api_init', function () {
     register_rest_route('bp-api/v1', '/member/(?P<user_id>\d+)/comments-count', array(
         'methods' => 'GET',
         'callback' => 'get_user_comment_count',
-        'permission_callback' => 'is_user_logged_in', // İzin kontrolü gerekirse buraya ekleyin
+        'permission_callback' => function () {
+            return is_user_logged_in();
+        }
     ));
-});
 
-add_action('rest_api_init', function () {
     register_rest_route('bp-api/v1', '/member/(?P<user_id>\d+)/friends-count', array(
         'methods' => 'GET',
         'callback' => 'get_friends_count',
-        'permission_callback' => '__return_true', // Eğer kullanıcı giriş yapmadıysa bu izni ayarlayabilirsiniz
+        'permission_callback' => function () {
+            return is_user_logged_in();
+        }
     ));
 });
-
 
 function get_user_activity_count_for_types( $request ) {
     global $wpdb;

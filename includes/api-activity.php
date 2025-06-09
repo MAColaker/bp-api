@@ -4,52 +4,49 @@ add_action('rest_api_init', function () {
     register_rest_route('bp-api/v1', '/activity/', array(
         'methods' => 'POST',
         'callback' => 'custom_bp_activity_add',
-        'permission_callback' => 'is_user_logged_in', // Gerekirse izin kontrolü ekleyin
+        'permission_callback' => function () {
+            return is_user_logged_in();
+        }
     ));
-});
 
-// BuddyPress REST API Uç Noktası Oluşturma
-add_action('rest_api_init', function () {
     register_rest_route('bp-api/v1', '/activity/(?P<activity_id>\d+)/file-url/', array(
         'methods' => 'GET',
         'callback' => 'get_file_url',
-        'permission_callback' => '__return_true', // Gerekirse izin kontrolü ekleyebilirsiniz
+        'permission_callback' => function () {
+            return is_user_logged_in();
+        }
     ));
-});
 
-// REST API uç noktası oluşturma
-add_action('rest_api_init', function () {
     register_rest_route('bp-api/v1', '/activity/(?P<activity_id>\d+)/favorites/', array(
         'methods' => 'GET',
         'callback' => 'get_activity_favorites_count',
-        'permission_callback' => '__return_true', // İzin kontrolü gerekebilir
+        'permission_callback' => function () {
+            return is_user_logged_in();
+        }
     ));
-});
 
-// REST API uç noktası oluşturma
-add_action('rest_api_init', function () {
     register_rest_route('bp-api/v1', '/activity/(?P<activity_id>\d+)/favorited-users/', array(
         'methods' => 'GET',
         'callback' => 'get_favorited_users',
-        'permission_callback' => '__return_true', // İzin kontrolü gerekebilir
+        'permission_callback' => function () {
+            return is_user_logged_in();
+        }
     ));
-});
 
-// REST API uç noktası oluşturma
-add_action('rest_api_init', function () {
     register_rest_route('bp-api/v1', '/activity/(?P<activity_id>\d+)/comment-count/', array(
         'methods' => 'GET',
         'callback' => 'get_activity_comment_count',
-        'permission_callback' => '__return_true', // İzin kontrolü gerekebilir
+        'permission_callback' => function () {
+            return is_user_logged_in();
+        }
     ));
-});
 
-// REST API uç noktası oluşturma
-add_action('rest_api_init', function () {
     register_rest_route('bp-api/v1', '/activity/(?P<activity_id>\d+)/comments/', array(
         'methods' => 'GET',
         'callback' => 'get_activity_comments',
-        'permission_callback' => '__return_true', // Gerekirse izin kontrolü ekleyebilirsiniz
+        'permission_callback' => function () {
+            return is_user_logged_in();
+        }
     ));
 });
 

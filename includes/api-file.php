@@ -20,34 +20,63 @@ function custom_file_upload(WP_REST_Request $request) {
     }
 
     $file = $_FILES['file'];
+    
+    // Dosya boyutunu kontrol et (örneğin 10 MB sınırı)
+    $max_size = 1024 * 1024 * 1024; // 10 MB
+    if ($file['size'] > $max_size) {
+        return new WP_REST_Response(['message' => 'Dosya çok büyük!'], 413);
+    }
+
+    // Dosya adını temizle
     $file_name = sanitize_file_name($file['name']);
 
-    // Yalnızca belirli dosya türlerine izin verelim
-    $allowed_mime_types = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'audio/mpeg'];
+    // MIME türlerini kontrol et
+    $allowed_mime_types = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'video/mp4',
+        'audio/mpeg'
+    ];
 
-    if (!in_array($file['type'], $allowed_mime_types)) {
+    // PHP tarafından tespit edilen MIME türünü al
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $real_mime_type = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+
+    // Hem PHP tarafından bildirilen hem de gerçekteki MIME türünü kontrol et
+    if (!in_array($real_mime_type, $allowed_mime_types)) {
         return new WP_REST_Response(['message' => 'Bu dosya türüne izin verilmiyor!'], 403);
     }
 
-    // Özel dosya yolu oluştur
-    $user_id = get_current_user_id(); // Giriş yapan kullanıcının ID'sini al
-    $year = date('Y'); // Yıl
-    $month = date('m'); // Ay
+    // Dosya uzantısını kontrol et
+    $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+    $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mp3'];
+    if (!in_array($file_ext, $allowed_extensions)) {
+        return new WP_REST_Response(['message' => 'Bu dosya uzantısına izin verilmiyor!'], 403);
+    }
+
+    // Kullanıcı ID'si ve dizin yolu
+    $user_id = get_current_user_id();
+    $year = date('Y');
+    $month = date('m');
     $custom_dir = WP_CONTENT_DIR . "/uploads/bp-api/members/{$user_id}/{$year}/{$month}";
 
     // Dizin yoksa oluştur
-    if (!file_exists($custom_dir)) {
-        wp_mkdir_p($custom_dir);
+    if (!wp_mkdir_p($custom_dir)) {
+        return new WP_REST_Response(['message' => 'Yükleme dizini oluşturulamadı!'], 500);
     }
 
-    // Dosyayı özel dizine taşı
-    $file_path = $custom_dir . '/' . $file_name;
+    // Aynı ada sahip dosya varsa benzersiz bir isim ver
+    $file_path = $custom_dir . '/' . wp_unique_filename($custom_dir, $file_name);
+
+    // Dosyayı taşı
     if (!move_uploaded_file($file['tmp_name'], $file_path)) {
         return new WP_REST_Response(['message' => 'Dosya taşınırken hata oluştu!'], 500);
     }
 
-    // Dosya URL'sini oluştur
-    $file_url = content_url("/uploads/bp-api/members/{$user_id}/{$year}/{$month}/{$file_name}");
+    // Dosya URL'si
+    $file_url = content_url(str_replace(WP_CONTENT_DIR, '', $file_path));
 
     // Dosyayı wp_posts tablosuna ekle
     $post_data = [
@@ -68,17 +97,14 @@ function custom_file_upload(WP_REST_Request $request) {
     $attachment_metadata = wp_generate_attachment_metadata($post_id, $file_path);
     wp_update_attachment_metadata($post_id, $attachment_metadata);
 
-    // Dosya yolunu attachment meta verisi olarak kaydet
-    update_post_meta($post_id, '_wp_attached_file', "bp-api/members/{$user_id}/{$year}/{$month}/{$file_name}");
-	
-	// Dosyayı özel bir meta veri ile işaretle
+    // Özel meta veriler
+    update_post_meta($post_id, '_wp_attached_file', "bp-api/members/{$user_id}/{$year}/{$month}/" . basename($file_path));
     update_post_meta($post_id, '_bp_hidden_file', true);
 
-    // Yüklenen dosyanın URL'sini ve ID'sini döndür
     return new WP_REST_Response([
         'message' => 'Dosya başarıyla yüklendi!',
-        'url' => $file_url,
-        'id' => $post_id
+        'url'     => $file_url,
+        'id'      => $post_id
     ], 200);
 }
 
